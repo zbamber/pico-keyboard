@@ -1,0 +1,13 @@
+.program matrix
+
+.wrap_target
+    pull block      ; Wait for DMA to send the 8-bit row mask
+    out pins, 8     ; Drive the 8 row pins with that mask
+    
+    set x, 4       ; Setup a delay counter
+delay_loop: ; at 1MHz this gives a 5 microsecond delay
+    jmp x-- delay_loop ; Loop to let electrical signals settle
+    
+    in pins, 8      ; Read the 8 column pins into the Input Shift Register
+    push block      ; Send the column data to the RX FIFO for DMA to pick up
+.wrap
