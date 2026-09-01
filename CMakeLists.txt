@@ -54,6 +54,7 @@ target_link_libraries(read_keys
         pico_stdlib
         hardware_pio
         hardware_dma
+        hardware_adc
         tinyusb_device
         tinyusb_board
 )

@@ -3,9 +3,11 @@
 #include "pico/stdlib.h"
 #include "hardware/pio.h"
 #include "hardware/dma.h"
+#include "hardware/adc.h"
 #include "matrix.pio.h"
 #include "bsp/board.h"
 #include "tusb.h"
+#include "pico/time.h"
 
 
 // keyboard wiring matrix
@@ -159,3 +161,49 @@ int main() {
     }
     return 0;
 }
+
+
+// // Scanning the button matrices to map them
+// int main () {
+//     stdio_init_all();
+
+//     // init all pins as inputs with pullup resistors 
+//     for (int i{0}; i < 15; i++) {
+//         gpio_init(i);
+//         gpio_set_dir(i, GPIO_IN);
+//         gpio_pull_up(i);
+//     }
+
+//     // scanning
+//     int out_pin{0};
+//     while (true) {
+//         // set pin to output and low
+//         gpio_set_dir(out_pin, GPIO_OUT);
+//         gpio_put(out_pin, 0);
+
+//         sleep_us(100);
+//         // scan all other pins for button press
+//         for (int in_pin{0}; in_pin < 15; in_pin++) {
+//             if (in_pin != out_pin) {
+//                 if (gpio_get(in_pin) == 0) {
+//                     printf("Button pressed: Pin %d and Pin %d bridged\n", out_pin, in_pin);
+//                 }
+//             }
+//         }
+
+//         // return pin to input with pull-up
+//         gpio_set_dir(out_pin, GPIO_IN);
+//         gpio_pull_up(out_pin);
+        
+//         // loop
+//         if (out_pin < 14) {
+//             out_pin++;
+//         } else {
+//             out_pin = 0;
+//             printf("--- Scan Complete ---\n");
+//             sleep_ms(500);
+//         }
+//     }
+
+//     return 0;
+// }
