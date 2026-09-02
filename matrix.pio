@@ -1,13 +1,12 @@
 .program matrix
 
 .wrap_target
-    pull block      ; Wait for DMA to send the 8-bit row mask
-    out pins, 8     ; Drive the 8 row pins with that mask
+    pull block          ; Get the 8-bit row mask from TX DMA
+    out pins, 8 [31]    ; Drive rows GP0-GP7, then wait 31 microseconds
     
-    set x, 4       ; Setup a delay counter
-delay_loop: ; at 1MHz this gives a 5 microsecond delay
-    jmp x-- delay_loop ; Loop to let electrical signals settle
-    
-    in pins, 8      ; Read the 8 column pins into the Input Shift Register
-    push block      ; Send the column data to the RX FIFO for DMA to pick up
+    nop [31]            ; Wait another 31 us
+    nop [31]            ; Wait another 31 us (Total ~93us delay for electrical settling)
+
+    in pins, 16         ; Read 16 sequential pins (GP8 through GP23)
+    push block          ; Push the 16-bit result to the RX DMA
 .wrap
