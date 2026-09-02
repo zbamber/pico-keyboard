@@ -11,99 +11,60 @@
 
 
 enum PanelButton {
-    BTN_NONE,             // 0
-    BTN_INTRO_ENDING,     // 1
-    BTN_START_STOP,       // 2
-    BTN_MAIN_VOL_UP,      // 3
-    BTN_MAIN_VOL_DOWN,    // 4
-    BTN_TEMPO_UP,         // 5
-    BTN_TEMPO_DOWN,       // 6
-    BTN_ACCOMP_VOL_UP,    // 7
-    BTN_ACCOMP_VOL_DOWN,  // 8
-    BTN_TRANSPOSE_UP,     // 9
-    BTN_TRANSPOSE_DOWN,   // 10
-    BTN_SUSTAIN,          // 11
-    BTN_VIBRATO,          // 12
-    BTN_SYNC,             // 13
-    BTN_SINGLE,           // 14
-    BTN_FINGERED,         // 15
-    BTN_FILL,             // 16
-    BTN_METRONOME,        // 17
-    BTN_SPLIT,            // 18
-    BTN_REC,              // 19
-    BTN_PROGRAM,          // 20
-    BTN_PLAYBACK,         // 21
-    BTN_MEMORY,           // 22
-    BTN_M1,               // 23
-    BTN_M2,               // 24
-    BTN_PERCUSSION,       // 25
-    BTN_PLAY_PAUSE,       // 26
-    BTN_SKIP_BACK,        // 27
-    BTN_SKIP,             // 28
-    BTN_VOL_DOWN,         // 29
-    BTN_VOL_UP,           // 30
-    BTN_TEACH1,           // 31
-    BTN_TEACH2,           // 32
-    BTN_TONE,             // 33
-    BTN_RYTHM,            // 34
-    BTN_DEMO,             // 35
-    BTN_7,                // 36
-    BTN_8,                // 37
-    BTN_9,                // 38
-    BTN_MINUS,            // 39
-    BTN_4,                // 40
-    BTN_5,                // 41
-    BTN_6,                // 42
-    BTN_PLUS,             // 43
-    BTN_1,                // 44
-    BTN_2,                // 45
-    BTN_3,                // 46
-    BTN_0                 // 47
+    BTN_NONE,
+    BTN_INTRO_ENDING,
+    BTN_START_STOP,
+    BTN_MAIN_VOL_UP,
+    BTN_MAIN_VOL_DOWN,
+    BTN_TEMPO_UP,
+    BTN_TEMPO_DOWN,
+    BTN_ACCOMP_VOL_UP,
+    BTN_ACCOMP_VOL_DOWN,
+    BTN_TRANSPOSE_UP,
+    BTN_TRANSPOSE_DOWN,
+    BTN_SUSTAIN,
+    BTN_VIBRATO,
+    BTN_SYNC,
+    BTN_SINGLE,
+    BTN_FINGERED,
+    BTN_FILL,
+    BTN_METRONOME,
+    BTN_SPLIT,
+    BTN_REC,
+    BTN_PROGRAM,
+    BTN_PLAYBACK,
+    BTN_MEMORY,
+    BTN_M1,
+    BTN_M2,
+    BTN_PERCUSSION,
+    BTN_PLAY_PAUSE,
+    BTN_SKIP_BACK,
+    BTN_SKIP,
+    BTN_VOL_DOWN,
+    BTN_VOL_UP,
+    BTN_TEACH1,
+    BTN_TEACH2,
+    BTN_TONE,
+    BTN_RYTHM,
+    BTN_DEMO,
+    BTN_7,
+    BTN_8,
+    BTN_9,
+    BTN_MINUS,
+    BTN_4,
+    BTN_5,
+    BTN_6,
+    BTN_PLUS,
+    BTN_1,
+    BTN_2,
+    BTN_3,
+    BTN_0
 };
 
 struct ButtonMap {
     PanelButton btn;
     uint16_t min_val;
     uint16_t max_val;
-};
-
-class ButtonQueue {
-    private:
-        static constexpr int SIZE = 3; // max 3 btns pressed at once
-        
-        PanelButton buffer[SIZE];
-        int head = 0;
-        int tail = 0;
-        int count = 0;
-
-    public:
-        bool push(PanelButton btn) {
-            if (count == SIZE) {
-                return false; // full
-            }
-
-            buffer[tail] = btn;
-            tail = (tail + 1) % SIZE;
-            count++;
-
-            return true;
-        }
-
-        bool pop(PanelButton& btn) {
-            if (count == 0) {
-                return false; // empty
-            }
-
-            btn = buffer[head];
-            head = (head + 1) % SIZE;
-            count--;
-
-            return true;
-        }
-
-        int size() const {
-            return count;
-        }
 };
 
 const ButtonMap ladder_map[] = {
@@ -114,18 +75,16 @@ const ButtonMap ladder_map[] = {
     {BTN_VOL_UP, 3740, 3940}
 };
 
-// keyboard wiring matrix
-// // transpose and reverse
-// const uint8_t midi_matrix[64] = {
-//     96, 95, 94, 93, 92, 91, 90, 89,
-//     88, 87, 86, 85, 84, 83, 82, 81,
-//     80, 79, 78, 77, 76, 75, 74, 73,
-//     72, 71, 70, 69, 68, 67, 66, 65,
-//     64, 63, 62, 61, 60, 59, 58, 57,
-//     56, 55, 54, 53, 52, 51, 50, 49,
-//     48, 47, 46, 45, 44, 43, 42, 41,
-//     40, 39, 38, 37, 36,  0,  0,  0
-// };
+const PanelButton btn_matrix[64] = {
+    BTN_7, BTN_ACCOMP_VOL_DOWN, BTN_PLAYBACK, BTN_NONE, BTN_NONE, BTN_NONE, BTN_NONE, BTN_NONE,
+    BTN_6, BTN_START_STOP, BTN_REC, BTN_TEACH2, BTN_NONE, BTN_NONE, BTN_M2, BTN_NONE,
+    BTN_5, BTN_TRANSPOSE_UP, BTN_PROGRAM, BTN_TEACH1, BTN_NONE, BTN_SUSTAIN, BTN_M1, BTN_NONE,
+    BTN_4, BTN_MAIN_VOL_UP, BTN_SYNC, BTN_VIBRATO, BTN_NONE, BTN_TEMPO_UP, BTN_MEMORY, BTN_NONE,
+    BTN_3, BTN_MINUS, BTN_FILL, BTN_TEMPO_DOWN, BTN_NONE, BTN_TRANSPOSE_DOWN, BTN_ACCOMP_VOL_UP, BTN_NONE,
+    BTN_2, BTN_PLUS, BTN_FINGERED, BTN_RYTHM, BTN_NONE, BTN_MAIN_VOL_DOWN, BTN_INTRO_ENDING, BTN_NONE,
+    BTN_1, BTN_9, BTN_SINGLE, BTN_TONE, BTN_NONE, BTN_DEMO, BTN_SPLIT, BTN_NONE,
+    BTN_0, BTN_8, BTN_NONE, BTN_NONE, BTN_PERCUSSION, BTN_NONE, BTN_METRONOME, BTN_NONE
+};
 
 const uint8_t midi_matrix[64] = {
     36, 37, 38, 39, 40, 41, 42, 43,
@@ -136,45 +95,6 @@ const uint8_t midi_matrix[64] = {
     76, 77, 78, 79, 80, 81, 82, 83,
     84, 85, 86, 87, 88, 89, 90, 91,
     92, 93, 94, 95, 96,  0,  0,  0
-};
-
-// // transpose
-// const PanelButton btn_matrix[64] = {
-//     // Row 8
-//     BTN_7, BTN_6, BTN_5, BTN_4, BTN_3, BTN_2, BTN_1, BTN_0,
-//     // Row 9
-//     BTN_ACCOMP_VOL_DOWN, BTN_START_STOP, BTN_TRANSPOSE_UP, BTN_MAIN_VOL_UP, BTN_MINUS, BTN_PLUS, BTN_9, BTN_8,
-//     // Row 10
-//     BTN_PLAYBACK, BTN_REC, BTN_PROGRAM, BTN_SYNC, BTN_FILL, BTN_FINGERED, BTN_SINGLE, BTN_NONE,
-//     // Row 11
-//     BTN_NONE, BTN_TEACH2, BTN_TEACH1, BTN_VIBRATO, BTN_TEMPO_DOWN, BTN_RYTHM, BTN_TONE, BTN_NONE,
-//     // Row 12
-//     BTN_NONE, BTN_NONE, BTN_NONE, BTN_NONE, BTN_NONE, BTN_NONE, BTN_NONE, BTN_PERCUSSION,
-//     // Row 13
-//     BTN_NONE, BTN_NONE, BTN_SUSTAIN, BTN_TEMPO_UP, BTN_TRANSPOSE_DOWN, BTN_MAIN_VOL_DOWN, BTN_DEMO, BTN_NONE,
-//     // Row 14
-//     BTN_NONE, BTN_M2, BTN_M1, BTN_MEMORY, BTN_ACCOMP_VOL_UP, BTN_INTRO_ENDING, BTN_SPLIT, BTN_METRONOME,
-//     // Row 15 (Empty row at the bottom)
-//     BTN_NONE, BTN_NONE, BTN_NONE, BTN_NONE, BTN_NONE, BTN_NONE, BTN_NONE, BTN_NONE
-// };
-
-const PanelButton btn_matrix[64] = {
-    // Physical Column 0 (Software Row 0)
-    BTN_7, BTN_ACCOMP_VOL_DOWN, BTN_PLAYBACK, BTN_NONE, BTN_NONE, BTN_NONE, BTN_NONE, BTN_NONE,
-    // Physical Column 1 (Software Row 1)
-    BTN_6, BTN_START_STOP, BTN_REC, BTN_TEACH2, BTN_NONE, BTN_NONE, BTN_M2, BTN_NONE,
-    // Physical Column 2 (Software Row 2)
-    BTN_5, BTN_TRANSPOSE_UP, BTN_PROGRAM, BTN_TEACH1, BTN_NONE, BTN_SUSTAIN, BTN_M1, BTN_NONE,
-    // Physical Column 3 (Software Row 3)
-    BTN_4, BTN_MAIN_VOL_UP, BTN_SYNC, BTN_VIBRATO, BTN_NONE, BTN_TEMPO_UP, BTN_MEMORY, BTN_NONE,
-    // Physical Column 4 (Software Row 4)
-    BTN_3, BTN_MINUS, BTN_FILL, BTN_TEMPO_DOWN, BTN_NONE, BTN_TRANSPOSE_DOWN, BTN_ACCOMP_VOL_UP, BTN_NONE,
-    // Physical Column 5 (Software Row 5)
-    BTN_2, BTN_PLUS, BTN_FINGERED, BTN_RYTHM, BTN_NONE, BTN_MAIN_VOL_DOWN, BTN_INTRO_ENDING, BTN_NONE,
-    // Physical Column 6 (Software Row 6)
-    BTN_1, BTN_9, BTN_SINGLE, BTN_TONE, BTN_NONE, BTN_DEMO, BTN_SPLIT, BTN_NONE,
-    // Physical Column 7 (Software Row 7)
-    BTN_0, BTN_8, BTN_NONE, BTN_NONE, BTN_PERCUSSION, BTN_NONE, BTN_METRONOME, BTN_NONE
 };
 
 // row masks to set the corresponding row low to scan it
@@ -190,6 +110,43 @@ const uint8_t row_masks[8] __attribute__((aligned(8))) = {
 };
 
 uint16_t scanned_state[8] __attribute__((aligned(16))) = {0};
+
+
+class ButtonQueue {
+    private:
+        static constexpr int SIZE = 3; // max 3 btns pressed at once
+        PanelButton buffer[SIZE];
+        int head = 0;
+        int tail = 0;
+        int count = 0;
+
+    public:
+        bool push(PanelButton btn) {
+            if (count == SIZE) return false; // full
+
+            buffer[tail] = btn;
+            tail = (tail + 1) % SIZE;
+            count++;
+
+            return true;
+        }
+
+        bool pop(PanelButton& btn) {
+            if (count == 0) return false; // empty
+
+            btn = buffer[head];
+            head = (head + 1) % SIZE;
+            count--;
+
+            return true;
+        }
+
+        int size() const {
+            return count;
+        }
+};
+
+// --- HARDWARE SETUP ---
 
 void setup_pio(PIO pio, uint sm) {
     // load the assembly into the pio memory
@@ -275,31 +232,134 @@ void setup_adc() {
     adc_select_input(2);
 }
 
+// --- HARDWARE CONTROL ---
 
-PanelButton scan_ladder_btns() {
-    uint32_t adc_sum = 0;
-    const int NUM_SAMPLES = 8;
-    
-    for (int i = 0; i < NUM_SAMPLES; i++) {
-        adc_sum += adc_read();
+class InputController {
+private:
+    uint64_t previous_keys = 0;
+    uint64_t previous_btns = 0;
+    ButtonQueue btn_queue;
+
+    PanelButton stable_ladder_btn = BTN_NONE;    // correct state 
+    PanelButton candidate_ladder_btn = BTN_NONE; // fluctuating state
+    uint32_t candidate_start_time = 0;           // timestamp for debounce
+
+
+    PanelButton get_raw_ladder_button() {
+        uint32_t adc_sum = 0;
+        
+        for (int i = 0; i < 8; i++) {
+            adc_sum += adc_read();
+        }
+
+        // divide by 8 to average smoothing electrical noise
+        uint16_t adc_val = adc_sum >> 3;
+
+        if (adc_val < 100) return BTN_NONE;
+
+        for (const auto& map : ladder_map) {
+            if (adc_val >= map.min_val && adc_val <= map.max_val) {
+                return map.btn;
+            }
+        }
+
+        return BTN_NONE;
     }
 
-    // average to smooth noise
-    uint16_t adc_val = adc_sum / NUM_SAMPLES;
+    void process_matrix() {
+        uint64_t current_keys = 0;
+        uint64_t current_btns = 0;
 
-    if (adc_val < 100) return BTN_NONE;
+        // get and split the state into keys and buttons
+        for (int row = 0; row < 8; row++) {
+            // invert the 16 bit row so 1 is pressed 0 is released
+            uint16_t inverted_row = ~scanned_state[row];
 
-    int num_btns = sizeof(ladder_map) / sizeof(ladder_map[0]);
+            // extract the lower 8 bits (Keys on GP8-15) and shift them into place
+            current_keys |= ((uint64_t)(inverted_row & 0x00FF) << (row * 8));
 
-    for (int i = 0; i < num_btns; i++) {
-        if (adc_val >= ladder_map[i].min_val && adc_val <= ladder_map[i].max_val) {
-            return ladder_map[i].btn;
+            // extract the upper 8 bits and discard the most significant bit GP23 and shift them into place
+            current_btns |= ((uint64_t)((inverted_row >> 8) & 0x7F) << (row * 8));
+        }
+
+        // --- PROCESS KEYS ---
+
+        
+        uint64_t changed_keys = current_keys ^ previous_keys;
+        while (changed_keys) {
+            // finds the index of the lowest set bit (changed key) in a single clock cycle
+            int i = __builtin_ctzll(changed_keys);
+            uint8_t note = midi_matrix[i];
+            
+            if (note) {
+                // differentiate press or release
+                uint8_t velocity = ((current_keys >> i) & 1ULL) ? 127 : 0;
+                uint8_t status = velocity ? 0x90 : 0x80;
+                uint8_t msg[3] = { status, note, velocity };
+
+                tud_midi_stream_write(0, msg, 3);
+            }
+            // trick to clear the lowest set bit to process the next.
+            // when you -1 from changed_keys the lowest set bit will
+            // always flip as it is borrowed from in the subtraction,
+            // then bitwise AND will set any flipped bit to 0
+            changed_keys &= (changed_keys - 1);
+        }
+        previous_keys = current_keys;
+
+        // --- PROCESS BUTTONS ---
+
+        uint64_t pressed_btns = current_btns & ~previous_btns;
+        if (__builtin_popcountll(current_btns) <= 2) { // discard if more than 2 btns pressed
+            while (pressed_btns) {
+                int i = __builtin_ctzll(pressed_btns);
+                
+                if (btn_matrix[i] != BTN_NONE) {
+                    btn_queue.push(btn_matrix[i]);
+                }
+
+                pressed_btns &= (pressed_btns - 1);
+            }
+        }
+
+        previous_btns = current_btns;
+    }
+
+    void process_ladder() {
+        PanelButton raw_ladder_btn = get_raw_ladder_button();
+        uint32_t now = to_ms_since_boot(get_absolute_time());
+
+        if (raw_ladder_btn != candidate_ladder_btn) {
+            candidate_ladder_btn = raw_ladder_btn;
+            candidate_start_time = now;
+        } else if ((now - candidate_start_time) > 30){
+            if (stable_ladder_btn != candidate_ladder_btn) {
+                stable_ladder_btn = candidate_ladder_btn;
+
+                if (stable_ladder_btn != BTN_NONE) {
+                    btn_queue.push(stable_ladder_btn);
+                }
+            }
         }
     }
 
-    return BTN_NONE;
-}
+    void dispatch_events() {
+        while (btn_queue.size() > 0) {
+            PanelButton btn;
+            btn_queue.pop(btn);
+            uint8_t msg[3] = { 0xB0, static_cast<uint8_t>(btn), 127 };
+            tud_midi_stream_write(0, msg, 3);
+        }
+    }
 
+public:
+    void update() {
+        tud_task();
+        process_matrix();
+        process_ladder();
+        dispatch_events();
+    }
+};
 
 int main() {
     // init board and USB stack
@@ -312,159 +372,11 @@ int main() {
     setup_dma(pio0, 0);
     setup_adc();
 
-    uint64_t previous_keys = 0;
-    uint64_t previous_btns = 0;
-
-    ButtonQueue btn_queue;
-    // PanelButton previous_ladder_btn = BTN_NONE;
-
-    PanelButton stable_ladder_btn = BTN_NONE;    // correct state 
-    PanelButton candidate_ladder_btn = BTN_NONE; // fluctuating state
-    uint32_t candidate_start_time = 0;           // timestamp for debounce
+    InputController input_controller;
 
     while (true) {
-        // let TinyUSB handle background traffic
-        tud_task();
-
-        uint64_t current_keys = 0;
-        uint64_t current_btns = 0;
-
-        for (int row = 0; row < 8; row++) {
-            // invert the 16 bit row so 1 is pressed 0 is released
-            uint16_t inverted_row = ~scanned_state[row];
-
-            // extract the lower 8 bits (Keys on GP8-15) and shift them into place
-            current_keys |= ((uint64_t)(inverted_row & 0x00FF) << (row * 8));
-
-            // extract the upper 8 bits and discard the most significant bit GP23 and shift them into place
-            current_btns |= ((uint64_t)((inverted_row >> 8) & 0x7F) << (row * 8));
-        }
-
-        // use a bitwise XOR to find all the bits that have changed between states
-        uint64_t changed_keys = current_keys ^ previous_keys;
-        
-        while (changed_keys != 0) {
-            // finds the index of the lowest set bit (changed key) in a single clock cycle
-            int i = __builtin_ctzll(changed_keys);
-            uint8_t note = midi_matrix[i];
-            
-            if (note != 0) {
-                // check if the key was pressed or released
-                if ((current_keys >> i) & 1ULL) {
-                    uint8_t msg[3] = { 0x90, note, 127 };
-                    tud_midi_stream_write(0, msg, 3);
-                } else {
-                    uint8_t msg[3] = { 0x80, note, 0 };
-                    tud_midi_stream_write(0, msg, 3);
-                }
-            }
-            // trick to clear the lowest set bit to process the next.
-            // when you -1 from changed_keys the lowest set bit will
-            // always flip as it is borrowed from in the subtraction
-            // then bitwise AND will set any flipped bit to 0
-            changed_keys &= (changed_keys - 1);
-        }
-        previous_keys = current_keys;
-
-        uint64_t pressed_btns = current_btns & ~previous_btns;
-
-        // discard if more than 3 btns pressed
-        if (__builtin_popcountll(current_btns) <= 2) {
-            while (pressed_btns != 0) {
-                int i = __builtin_ctzll(pressed_btns);
-                PanelButton btn = btn_matrix[i];
-
-                if (btn != BTN_NONE) {
-                    btn_queue.push(btn);
-                }
-
-                pressed_btns &= (pressed_btns - 1);
-            }
-        }
-
-        previous_btns = current_btns;
-
-        // Resistor Ladder Button Processing
-        PanelButton raw_ladder_btn = scan_ladder_btns();
-
-        if (raw_ladder_btn != candidate_ladder_btn) {
-            candidate_ladder_btn = raw_ladder_btn;
-            candidate_start_time = to_ms_since_boot(get_absolute_time());
-        } else {
-            if ((to_ms_since_boot(get_absolute_time()) - candidate_start_time) > 30) {
-                if (stable_ladder_btn != candidate_ladder_btn) {
-                    stable_ladder_btn = candidate_ladder_btn;
-
-                    if (stable_ladder_btn != BTN_NONE) {
-                        btn_queue.push(stable_ladder_btn);
-                    }
-                }
-            }
-        }
-
-        // PanelButton current_ladder_btn = scan_ladder_btns();
-
-        // if (current_ladder_btn != BTN_NONE && current_ladder_btn != previous_ladder_btn) {
-        //     btn_queue.push(current_ladder_btn);
-        // }
-
-        // previous_ladder_btn = current_ladder_btn;
-
-        while (btn_queue.size() > 0) {
-            PanelButton btn;
-            btn_queue.pop(btn);
-
-            // testing - send a midi cc message on channel 1 
-            uint8_t cc_msg[3] = { 0xB0, (uint8_t)btn, 127 };
-            tud_midi_stream_write(0, cc_msg, 3);
-        }
-
+        input_controller.update();
     }
+
     return 0;
 }
-
-
-// // Scanning the btn matrices to map them
-// int main () {
-//     stdio_init_all();
-
-//     // init all pins as inputs with pullup resistors 
-//     for (int i{0}; i < 15; i++) {
-//         gpio_init(i);
-//         gpio_set_dir(i, GPIO_IN);
-//         gpio_pull_up(i);
-//     }
-
-//     // scanning
-//     int out_pin{0};
-//     while (true) {
-//         // set pin to output and low
-//         gpio_set_dir(out_pin, GPIO_OUT);
-//         gpio_put(out_pin, 0);
-
-//         sleep_us(100);
-//         // scan all other pins for btn press
-//         for (int in_pin{0}; in_pin < 15; in_pin++) {
-//             if (in_pin != out_pin) {
-//                 if (gpio_get(in_pin) == 0) {
-//                     printf("Button pressed: Pin %d and Pin %d bridged\n", out_pin, in_pin);
-//                 }
-//             }
-//         }
-
-//         // return pin to input with pull-up
-//         gpio_set_dir(out_pin, GPIO_IN);
-//         gpio_pull_up(out_pin);
-        
-//         // loop
-//         if (out_pin < 14) {
-//             out_pin++;
-//         } else {
-//             out_pin = 0;
-//             printf("--- Scan Complete ---\n");
-//             sleep_ms(500);
-//         }
-//     }
-
-//     return 0;
-// }
