@@ -361,6 +361,146 @@ public:
     }
 };
 
+// --- STATE MANAGER ---
+struct SynthParameters {
+    uint8_t master_volume = 100;
+    uint8_t osc_waveform = 0; // 0=Saw, 1=Square, 2=Triangle, 3=Sine
+    uint8_t filter_cutoff = 127;
+};
+
+enum class PageType { PAGE_MAIN, PAGE_OSC, PAGE_FILTER };
+
+// --- BASE PAGE CLASS - defines what any page is like
+class MenuPage {
+protected:
+    SynthParameters& params;
+
+public:
+    MenuPage(SynthParameters& p) : params(p) {}
+    virtual ~MenuPage() = default;
+
+    virtual bool handle_button(PanelButton btn) {
+        return false; 
+    }
+};
+
+class MainPage : public MenuPage {
+public:
+    using MenuPage::MenuPage;
+    // the rest
+};
+
+class OscPage : public MenuPage {
+public:
+    using MenuPage::MenuPage;
+    // the rest    
+};
+
+class FilterPage : public MenuPage {
+public:
+    using MenuPage::MenuPage;
+    // the rest
+};
+
+class UIStateManager {
+private:
+    SynthParameters params;
+
+    MainPage main_page{params};
+    FilterPage filter_page{params};
+    OscPage osc_page{params};
+
+    MenuPage* current_page{&main_page};
+    PageType current_page_type{PageType::PAGE_MAIN};
+
+    // display control flags
+    bool is_dirty = true;
+    bool error_flag = false;
+
+    bool handle_global_fallback(PanelButton btn) {
+        switch (btn) {
+            case BTN_VOL_UP:
+                if (params.master_volume < 127) params.master_volume++;
+                return true;
+            case BTN_VOL_DOWN:
+                if (params.master_volume > 0) params.master_volume--;
+                return true;
+            case BTN_PLAY_PAUSE:
+                // Trigger internal sequencer clock toggle
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    void set_page(PageType new_page) {
+        if (current_page_type == new_page) return;
+
+        switch (new_page) {
+            case PageType::PAGE_MAIN:
+                current_page = &main_page;
+                // current_page->on_enter();
+                break;
+            
+            case PageType::PAGE_OSC:
+                current_page = &osc_page;
+                // current_page->on_enter();
+                break;
+
+            case PageType::PAGE_FILTER:
+                current_page = &filter_page;
+                // current_page->on_enter();
+                break;
+
+            default:
+                return;
+        }
+
+        current_page_type = new_page;
+        is_dirty = true;
+    }
+
+public:
+    UIStateManager() = default;
+
+    const SynthParameters& get_params() const { return params; }
+
+    void process_button(PanelButton btn) {
+        switch (btn) {
+            // --- GLOBAL HOTKEYS ---
+            case BTN_TONE:
+                set_page(PageType::PAGE_OSC);
+                return;
+
+            case BTN_RYTHM:
+                set_page(PageType::PAGE_FILTER);
+                return;
+
+            case BTN_DEMO:
+                set_page(PageType::PAGE_MAIN);
+                return;
+
+            default:
+                // check active page first
+                if (current_page != nullptr && current_page->handle_button(btn)) {
+                    is_dirty = true;
+                    return;
+                }
+
+                // if page doesnt override do the global fallbacks
+                if (handle_global_fallback(btn)) {
+                    is_dirty = true;
+                    return;
+                }
+
+                // if nothing handled it show error
+                error_flag = true;
+                is_dirty = true;
+                return;
+        }
+    }
+};
+
 int main() {
     // init board and USB stack
     board_init();
