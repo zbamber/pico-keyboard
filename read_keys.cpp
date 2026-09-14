@@ -1,14 +1,26 @@
 #include <stdio.h>
 #include <cstdint>
+#include <cmath>
 #include "pico/stdlib.h"
 #include "hardware/pio.h"
 #include "hardware/dma.h"
 #include "hardware/adc.h"
+#include "hardware/i2c.h"
 #include "matrix.pio.h"
 #include "bsp/board.h"
 #include "tusb.h"
 #include "pico/time.h"
 
+
+namespace OledConfig {
+    inline constexpr uint8_t PinSda       {26};
+    inline constexpr uint8_t PinScl       {27};
+    inline constexpr uint8_t OledI2cAddr  {0x3C};
+    inline auto* const I2cPort = i2c1;
+
+    inline constexpr uint16_t ScreenWidth  {128};
+    inline constexpr uint16_t ScreenHeight {64};
+}
 
 enum PanelButton {
     BTN_NONE,
@@ -335,20 +347,11 @@ private:
         } else if ((now - candidate_start_time) > 30){
             if (stable_ladder_btn != candidate_ladder_btn) {
                 stable_ladder_btn = candidate_ladder_btn;
-
+                
                 if (stable_ladder_btn != BTN_NONE) {
                     btn_queue.push(stable_ladder_btn);
                 }
             }
-        }
-    }
-
-    void dispatch_events() {
-        while (btn_queue.size() > 0) {
-            PanelButton btn;
-            btn_queue.pop(btn);
-            uint8_t msg[3] = { 0xB0, static_cast<uint8_t>(btn), 127 };
-            tud_midi_stream_write(0, msg, 3);
         }
     }
 
@@ -357,7 +360,109 @@ public:
         tud_task();
         process_matrix();
         process_ladder();
-        dispatch_events();
+    }
+
+    bool get_next_button(PanelButton& btn) { return btn_queue.pop(btn); }
+};
+
+// --- DISPLAY DRIVER ---
+
+class DisplayDriver {
+private:
+    static constexpr uint8_t PinSda       {26};
+    static constexpr uint8_t PinScl       {27};
+    static constexpr uint8_t OledI2cAddr  {0x3C};
+    inline static i2c_inst_t* const I2cPort {i2c1};
+
+    uint8_t framebuffer[1024] = {0};
+
+    void send_cmd(uint8_t cmd) {
+        uint8_t buf[2] = {0x00, cmd};
+        i2c_write_blocking(I2cPort, OledI2cAddr, buf, 2, false);
+    }
+
+public:
+    static constexpr uint16_t ScreenWidth  {128};
+    static constexpr uint16_t ScreenHeight {64};
+
+    void init() {
+        i2c_init(I2cPort, 400 * 1000);
+        gpio_set_function(26, GPIO_FUNC_I2C);
+        gpio_set_function(27, GPIO_FUNC_I2C);
+        gpio_pull_up(26);
+        gpio_pull_up(27);
+
+        // Standard SSD1309 initialization sequence
+        send_cmd(0xAE); send_cmd(0xD5); send_cmd(0x80);
+        send_cmd(0xA8); send_cmd(0x3F); send_cmd(0xD3);
+        send_cmd(0x00); send_cmd(0x40); send_cmd(0x20);
+        send_cmd(0x00); send_cmd(0xA1); send_cmd(0xC8);
+        send_cmd(0xDA); send_cmd(0x12); send_cmd(0x81);
+        send_cmd(0x7F); send_cmd(0xD9); send_cmd(0xF1);
+        send_cmd(0xDB); send_cmd(0x34); send_cmd(0xA4);
+        send_cmd(0xA6); send_cmd(0xAF);
+    }
+
+    void oled_clear() {
+        memset(framebuffer, 0, sizeof(framebuffer));
+    }
+
+    void render() {
+        send_cmd(0x21); // Reset Column Address (0 to 127)
+        send_cmd(0);
+        send_cmd(ScreenWidth - 1);
+
+        send_cmd(0x22); // Reset Page Address (0 to 7)
+        send_cmd(0);
+        send_cmd((ScreenHeight / 8) - 1);
+
+        uint8_t payload[1025];
+        payload[0] = 0x40; // Data mode
+        memcpy(&payload[1], framebuffer, 1024);
+        i2c_write_blocking(I2cPort, OledI2cAddr, payload, 1025, false);
+    }
+
+    void draw_pixel(int x, int y, bool on = true) {
+        if (x < 0 || x >= ScreenWidth || y < 0 || y >= ScreenHeight) return;
+        int index = (y / 8) * 128 + x;
+        if (on) {
+            framebuffer[index] |= (1 << (y % 8));
+        } else {
+            framebuffer[index] &= ~(1 << (y % 8));
+        }
+    }
+
+    void draw_line(int x0, int y0, int x1, int y1) {
+        int dx = abs(x1 - x0);
+        int sx = x0 < x1 ? 1 : -1;
+        int dy = -abs(y1 - y0);
+        int sy = y0 < y1 ? 1 : -1;
+        int err = dx + dy;
+
+        while (true) {
+            draw_pixel(x0, y0);
+            if (x0 == x1 && y0 == y1) break;
+            int e2 = 2 * err;
+            if (e2 >= dy) {
+                err += dy;
+                x0 += sx;
+            }
+            if (e2 <= dx) {
+                err += dx;
+                y0 += sy;
+            }
+        }
+    }
+
+    void draw_error_border() {
+        for (int x = 0; x < 128; x++) {
+            draw_pixel(x, 0); draw_pixel(x, 1);
+            draw_pixel(x, 62); draw_pixel(x, 63);
+        }
+        for (int y = 0; y < 64; y++) {
+            draw_pixel(0, y); draw_pixel(1, y);
+            draw_pixel(126, y); draw_pixel(127, y);
+        }
     }
 };
 
@@ -382,24 +487,44 @@ public:
     virtual bool handle_button(PanelButton btn) {
         return false; 
     }
+
+    virtual void draw(DisplayDriver& display) = 0;
 };
 
 class MainPage : public MenuPage {
 public:
     using MenuPage::MenuPage;
-    // the rest
+
+    void draw(DisplayDriver& display) override {
+        // Test pattern: A diagonal cross using your Bresenham logic
+        display.oled_clear();
+        display.draw_line(0, 0, 127, 63);
+        display.draw_line(0, 63, 127, 0);
+    }
 };
 
 class OscPage : public MenuPage {
 public:
     using MenuPage::MenuPage;
-    // the rest    
+    
+    void draw(DisplayDriver& display) override {
+        // Just a box
+        display.oled_clear();
+        display.draw_line(10, 10, 118, 10);
+        display.draw_line(118, 10, 118, 54);
+        display.draw_line(118, 54, 10, 54);
+        display.draw_line(10, 54, 10, 10);
+    }   
 };
 
 class FilterPage : public MenuPage {
 public:
     using MenuPage::MenuPage;
-    // the rest
+    
+    void draw(DisplayDriver& display) override {
+        display.oled_clear();
+        display.draw_error_border();
+    }
 };
 
 class UIStateManager {
@@ -499,6 +624,13 @@ public:
                 return;
         }
     }
+
+    void update_screen(DisplayDriver& display) {
+        if (!is_dirty) return;
+        current_page->draw(display);
+        display.render();
+        is_dirty = false;
+    }
 };
 
 int main() {
@@ -512,10 +644,26 @@ int main() {
     setup_dma(pio0, 0);
     setup_adc();
 
+    sleep_ms(250);
     InputController input_controller;
+    DisplayDriver display;
+    display.init();
+    UIStateManager ui_manager;
 
+    display.oled_clear();
     while (true) {
         input_controller.update();
+        
+        PanelButton btn;
+        while (input_controller.get_next_button(btn)) {
+            ui_manager.process_button(btn);
+
+            // for testing
+            uint8_t cc_msg[3] = { 0xB0, static_cast<uint8_t>(btn), 127 };
+            tud_midi_stream_write(0, cc_msg, 3);
+        }
+
+        ui_manager.update_screen(display);
     }
 
     return 0;

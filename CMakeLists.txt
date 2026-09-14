@@ -55,6 +55,7 @@ target_link_libraries(read_keys
         hardware_pio
         hardware_dma
         hardware_adc
+        hardware_i2c
         tinyusb_device
         tinyusb_board
 )
